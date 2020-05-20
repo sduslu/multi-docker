@@ -1,0 +1,24 @@
+language: generic
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t sduslu/react-test -f ./client/Dockerfile.dev ./client
+
+# here would come more scripts for running more test suites:
+script:
+    - docker run -e CI=true sduslu/react-test npm test
+
+after_success:
+    - docker build -t sduslu/multi-client ./client
+    - docker build -t sduslu/multi-nginx ./nginx
+    - docker build -t sduslu/multi-server ./server
+    - docker build -t sduslu/multi-worker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take those images and push them to docker hub
+    - docker push sduslu/multi-client
+    - docker push sduslu/multi-nginx
+    - docker push sduslu/multi-server
+    - docker push sduslu/multi-worker
